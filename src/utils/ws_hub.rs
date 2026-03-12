@@ -1,6 +1,7 @@
 use axum::extract::ws::{Message, WebSocket};
 use dashmap::DashMap;
 use futures::stream::StreamExt;
+use futures::SinkExt;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use lazy_static::lazy_static;

@@ -1,0 +1,10 @@
+C:\Users\Administrator\Desktop\hope_new\Hope-backend-rust\target\debug\deps\ipconfig-6b8e57cfc96ee0a9.d: C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\adapter.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\mod.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\win64.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\computer.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\error.rs
+
+C:\Users\Administrator\Desktop\hope_new\Hope-backend-rust\target\debug\deps\libipconfig-6b8e57cfc96ee0a9.rmeta: C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\lib.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\adapter.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\mod.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\win64.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\computer.rs C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\error.rs
+
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\lib.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\adapter.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\mod.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\bindings\win64.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\computer.rs:
+C:\Users\Administrator\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ipconfig-0.3.2\src\error.rs:

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::utils::ws_hub::WsHub;
 use crate::services::ai::AiService;
 use crate::services::memory::MemoryService;
-use bson::doc;
+use bson::{doc, Document};
 use futures::StreamExt;
 
 pub struct JobService;
@@ -37,13 +37,24 @@ impl JobService {
     async fn send_resonant_nudges(db_context: &Arc<DbContext>) {
         tracing::info!("Running AI Dreaming (Resonant Nudges) in Rust...");
         let ai_service = AiService::new();
-        let collection = db_context.db.collection::<serde_json::Value>("users");
+        let collection = db_context.db.collection::<Document>("users");
         
-        let mut cursor = collection.find(doc! { "isEmailVerified": true }, None).await.unwrap();
+        let mut cursor = match collection.find(doc! { "isEmailVerified": true }, None).await {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to query users for nudges: {}", e);
+                return;
+            }
+        };
 
         while let Some(result) = cursor.next().await {
             if let Ok(user) = result {
-                let uid = user.get("_id").unwrap().as_object_id().unwrap().to_hex();
+                // Using BSON Document directly solves the type issues
+                let uid_obj = match user.get_object_id("_id") {
+                    Ok(id) => id,
+                    Err(_) => continue,
+                };
+                let uid = uid_obj.to_hex();
                 
                 // Fetch user memory
                 let context = MemoryService::get_context(&db_context.db, &uid).await;
@@ -60,9 +71,9 @@ impl JobService {
                     WsHub::send_to_user(&uid, &nudge);
                     
                     // Also save to DB for offline viewing
-                    let notif_coll = db_context.db.collection::<bson::Document>("notifications");
+                    let notif_coll = db_context.db.collection::<Document>("notifications");
                     let _ = notif_coll.insert_one(doc! {
-                        "userId": user.get("_id").unwrap(),
+                        "userId": uid_obj,
                         "title": "Hope check-in",
                         "message": nudge,
                         "type": "nudge",

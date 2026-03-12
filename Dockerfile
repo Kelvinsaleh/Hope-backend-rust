@@ -15,6 +15,7 @@ RUN cargo build --release
 RUN rm -f target/release/deps/hope_backend_rust*
 
 # Now copy the actual source and build the real app
+COPY config ./config
 COPY src ./src
 RUN cargo build --release
 
