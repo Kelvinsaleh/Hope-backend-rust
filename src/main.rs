@@ -1,5 +1,10 @@
-use axum::{routing::{get, post, put, delete}, Router};
+use axum::{
+    routing::{get, post, put, delete}, 
+    Router,
+    http::{Method, header},
+};
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod routes;
@@ -35,11 +40,36 @@ async fn main() {
     // 4. Start Background Workers
     JobService::start_background_workers(db_context.clone()).await;
 
-    // 5. Setup CORS
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+    // 5. Setup Robust CORS based on Render Env Vars
+    let mut cors = CorsLayer::new()
+        .allow_methods([
+            Method::GET, 
+            Method::POST, 
+            Method::PUT, 
+            Method::DELETE, 
+            Method::OPTIONS, 
+            Method::PATCH
+        ])
+        .allow_headers([
+            header::AUTHORIZATION,
+            header::CONTENT_TYPE,
+            header::ACCEPT,
+            header::ORIGIN,
+        ]);
+
+    // Handle Origins from Config
+    if config.allow_localhost {
+        cors = cors.allow_origin([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+            "http://localhost:8080".parse().unwrap(),
+            "http://localhost:5000".parse().unwrap(),
+            "http://localhost:53503".parse().unwrap(), // common flutter web port
+            config.cors_origin.parse().unwrap(),
+        ]);
+    } else {
+        cors = cors.allow_origin(config.cors_origin.parse().unwrap());
+    }
 
     // 6. Build Router
     let app = Router::new()
@@ -75,6 +105,7 @@ async fn main() {
         // Analytics & Real-time
         .route("/analytics/summary", get(routes::analytics::get_summary))
         .route("/ws", get(routes::ws::ws_handler))
+        .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(db_context);
 

@@ -5,6 +5,8 @@ pub struct Config {
     pub jwt_secret: String,
     pub gemini_api_key: String,
     pub port: u16,
+    pub cors_origin: String,
+    pub allow_localhost: bool,
 }
 
 impl Config {
@@ -17,6 +19,10 @@ impl Config {
                 .unwrap_or_else(|_| "8080".to_string())
                 .parse()
                 .expect("PORT must be a number"),
+            cors_origin: env::var("CORS_ORIGIN").unwrap_or_else(|_| "*".to_string()),
+            allow_localhost: env::var("ALLOW_LOCALHOST_ORIGINS")
+                .map(|v| v == "true")
+                .unwrap_or(false),
         }
     }
 }
