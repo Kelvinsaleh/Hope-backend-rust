@@ -41,10 +41,13 @@ where
         // 2. Fallback to JWT Decode (Regular Lane)
         let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
+        let mut validation = Validation::default();
+        validation.leeway = 60; // 60 seconds leeway for clock skew
+
         let token_data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(secret.as_ref()),
-            &Validation::default(),
+            &validation,
         ).map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid token"))?;
 
         let user_id = token_data.claims.userId;
