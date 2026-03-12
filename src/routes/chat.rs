@@ -280,24 +280,53 @@ pub async fn chat_stream(
 
 use crate::models::chat::{ChatSession, ChatMessage};
 
+#[derive(Serialize)]
+pub struct ChatSessionResponse {
+    #[serde(rename = "id")]
+    pub id: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
+    pub title: Option<String>,
+    #[serde(rename = "messageCount")]
+    pub message_count: usize,
+    #[serde(rename = "createdAt")]
+    pub created_at: bson::DateTime,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: bson::DateTime,
+}
+
 pub async fn list_sessions(
     State(db_context): State<Arc<DbContext>>,
     user: AuthenticatedUser,
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<ChatSession>("chat_sessions");
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+    };
 
     let filter = doc! { "userId": uid, "isArchived": false };
-    let mut cursor = collection.find(filter, None).await.unwrap();
+    let mut cursor = match collection.find(filter, None).await {
+        Ok(c) => c,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "success": false, "message": "Database error" }))).into_response(),
+    };
     
     let mut sessions = Vec::new();
     while let Some(result) = cursor.next().await {
-        if let Ok(mut session) = result {
-            sessions.push(session);
+        if let Ok(session) = result {
+            let id_str = session.id.map(|oid| oid.to_hex()).unwrap_or_default();
+            sessions.push(ChatSessionResponse {
+                id: id_str.clone(),
+                session_id: id_str,
+                title: session.title,
+                message_count: session.messages.len(),
+                created_at: session.created_at,
+                updated_at: session.updated_at,
+            });
         }
     }
 
-    (StatusCode::OK, Json(serde_json::json!({ "success": true, "sessions": sessions })))
+    (StatusCode::OK, Json(serde_json::json!({ "success": true, "sessions": sessions }))).into_response()
 }
 
 pub async fn create_session(
@@ -305,7 +334,10 @@ pub async fn create_session(
     user: AuthenticatedUser,
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<ChatSession>("chat_sessions");
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+    };
     let now = bson::DateTime::from_millis(Utc::now().timestamp_millis());
 
     let new_session = ChatSession {
@@ -325,12 +357,12 @@ pub async fn create_session(
                 "success": true, 
                 "sessionId": session_id,
                 "message": "Session created" 
-            })))
+            }))).into_response()
         },
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ 
             "success": false, 
             "message": "Failed to create session" 
-        }))),
+        }))).into_response(),
     }
 }
 
@@ -340,10 +372,13 @@ pub async fn delete_session(
     axum::extract::Path(session_id): axum::extract::Path<String>,
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<ChatSession>("chat_sessions");
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+    };
     let sid = match ObjectId::parse_str(&session_id) {
         Ok(id) => id,
-        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid session ID" }))),
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid session ID" }))).into_response(),
     };
 
     // Soft delete
@@ -351,7 +386,7 @@ pub async fn delete_session(
     let update = doc! { "$set": { "isArchived": true, "updatedAt": bson::DateTime::now() } };
 
     match collection.update_one(filter, update, None).await {
-        Ok(_) => (StatusCode::OK, Json(serde_json::json!({ "success": true }))),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "success": false }))),
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({ "success": true }))).into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "success": false }))).into_response(),
     }
 }
