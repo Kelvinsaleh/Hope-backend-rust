@@ -1,9 +1,9 @@
 use axum::{
     routing::{get, post, put, delete}, 
     Router,
-    http::{Method, header, HeaderValue},
+    http::{Method, header},
 };
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -40,35 +40,22 @@ async fn main() {
     // 4. Start Background Workers
     JobService::start_background_workers(db_context.clone()).await;
 
-    // 5. Setup Robust CORS based on Render Env Vars
+    // 5. Setup Highly Permissive CORS for Debugging/Localhost
     let mut cors = CorsLayer::new()
-        .allow_methods([
-            Method::GET, 
-            Method::POST, 
-            Method::PUT, 
-            Method::DELETE, 
-            Method::OPTIONS, 
-            Method::PATCH
-        ])
-        .allow_headers([
-            header::AUTHORIZATION,
-            header::CONTENT_TYPE,
-            header::ACCEPT,
-            header::ORIGIN,
-        ]);
+        .allow_methods(Any)
+        .allow_headers(Any);
 
-    // Handle Origins from Config
     if config.allow_localhost {
-        cors = cors.allow_origin([
-            "http://localhost:3000".parse::<HeaderValue>().unwrap(),
-            "http://127.0.0.1:3000".parse::<HeaderValue>().unwrap(),
-            "http://localhost:8080".parse::<HeaderValue>().unwrap(),
-            "http://localhost:5000".parse::<HeaderValue>().unwrap(),
-            "http://localhost:53503".parse::<HeaderValue>().unwrap(), // common flutter web port
-            config.cors_origin.parse::<HeaderValue>().unwrap(),
-        ]);
+        tracing::info!("CORS: Global Permissive Mode Enabled (Any Origin)");
+        cors = cors.allow_origin(Any);
     } else {
-        cors = cors.allow_origin(config.cors_origin.parse::<HeaderValue>().unwrap());
+        tracing::info!("CORS: Restricted to {}", config.cors_origin);
+        // Fallback to strict if not in localhost mode
+        let origin = config.cors_origin.parse::<axum::http::HeaderValue>().unwrap_or_else(|_| {
+            tracing::warn!("Invalid CORS_ORIGIN, falling back to Any");
+            axum::http::HeaderValue::from_static("*")
+        });
+        cors = cors.allow_origin(origin);
     }
 
     // 6. Build Router
