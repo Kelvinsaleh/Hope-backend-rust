@@ -278,7 +278,7 @@ pub async fn chat_stream(
     Sse::new(combined_stream)
 }
 
-use crate::models::chat::{ChatSession, ChatMessage};
+use crate::models::chat::ChatSession;
 
 #[derive(Serialize)]
 pub struct ChatSessionResponse {

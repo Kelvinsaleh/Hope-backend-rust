@@ -1,9 +1,9 @@
 use axum::{
     routing::{get, post, put, delete}, 
     Router,
-    http::{Method, header},
+    http::{Method, header, HeaderValue},
 };
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -60,15 +60,15 @@ async fn main() {
     // Handle Origins from Config
     if config.allow_localhost {
         cors = cors.allow_origin([
-            "http://localhost:3000".parse().unwrap(),
-            "http://127.0.0.1:3000".parse().unwrap(),
-            "http://localhost:8080".parse().unwrap(),
-            "http://localhost:5000".parse().unwrap(),
-            "http://localhost:53503".parse().unwrap(), // common flutter web port
-            config.cors_origin.parse().unwrap(),
+            "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+            "http://127.0.0.1:3000".parse::<HeaderValue>().unwrap(),
+            "http://localhost:8080".parse::<HeaderValue>().unwrap(),
+            "http://localhost:5000".parse::<HeaderValue>().unwrap(),
+            "http://localhost:53503".parse::<HeaderValue>().unwrap(), // common flutter web port
+            config.cors_origin.parse::<HeaderValue>().unwrap(),
         ]);
     } else {
-        cors = cors.allow_origin(config.cors_origin.parse().unwrap());
+        cors = cors.allow_origin(config.cors_origin.parse::<HeaderValue>().unwrap());
     }
 
     // 6. Build Router
