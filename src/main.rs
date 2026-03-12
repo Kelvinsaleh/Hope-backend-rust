@@ -1,4 +1,4 @@
-use axum::{routing::{get, post, put}, Router};
+use axum::{routing::{get, post, put, delete}, Router};
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -51,6 +51,8 @@ async fn main() {
         // Chat
         .route("/chat", post(routes::chat::send_message))
         .route("/chat/stream", post(routes::chat::chat_stream))
+        .route("/chat/sessions", get(routes::chat::list_sessions).post(routes::chat::create_session))
+        .route("/chat/sessions/:id", delete(routes::chat::delete_session))
         // Journal
         .route("/journal", post(routes::journal::create_entry).get(routes::journal::list_entries))
         // Mood

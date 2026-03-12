@@ -4,3 +4,4 @@ pub mod mood;
 pub mod resilience;
 pub mod notifications;
 pub mod activity;
+pub mod chat;
