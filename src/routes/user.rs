@@ -8,19 +8,25 @@ use crate::utils::database::DbContext;
 use crate::middleware::auth::AuthenticatedUser;
 use crate::models::user::User;
 use crate::models::activity::ProfileUpdate;
-use bson::{doc, oid::ObjectId};
+use bson::{doc, oid::ObjectId, Document};
 
 pub async fn get_profile(
     State(db_context): State<Arc<DbContext>>,
     user: AuthenticatedUser,
 ) -> impl IntoResponse {
-    let collection = db_context.db.collection::<serde_json::Value>("users");
+    let collection = db_context.db.collection::<Document>("users");
     let uid = ObjectId::parse_str(&user.user_id).unwrap();
 
     let user_doc = collection.find_one(doc! { "_id": uid }, None).await.unwrap();
 
     match user_doc {
-        Some(u) => (StatusCode::OK, Json(serde_json::json!({ "success": true, "user": u }))),
+        Some(mut u) => {
+            // Convert _id to hex string for Flutter
+            if let Some(id) = u.get_object_id("_id").ok() {
+                u.insert("_id", id.to_hex());
+            }
+            (StatusCode::OK, Json(serde_json::json!({ "success": true, "user": u })))
+        },
         None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "success": false, "message": "User not found" }))),
     }
 }
