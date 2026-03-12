@@ -12,7 +12,7 @@ pub struct EmailService {
 
 impl EmailService {
     pub fn new() -> Self {
-        let config = Config::from_env();
+        let _config = Config::from_env();
         // Note: You'll need to add RESEND_API_KEY and FROM_EMAIL to your .env
         let api_key = std::env::var("RESEND_API_KEY").unwrap_or_default();
         let from_email = std::env::var("FROM_EMAIL").unwrap_or_else(|_| "onboarding@resend.dev".to_string());

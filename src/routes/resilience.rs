@@ -18,8 +18,8 @@ pub async fn get_active_reps(
     let collection = db_context.db.collection::<ResilienceRep>("resilience_reps");
     let uid = ObjectId::parse_str(&user.user_id).unwrap();
     
-    let now = DateTime::from_millis(Utc::now().timestamp_millis());
-    let expiry_limit = DateTime::from_millis((Utc::now() - Duration::hours(48)).timestamp_millis());
+    let _now = DateTime::from_millis(Utc::now().timestamp_millis());
+    let expiry_limit = DateTime::from_millis((Utc::now() - Duration::try_hours(48).unwrap()).timestamp_millis());
 
     let filter = doc! {
         "userId": uid,

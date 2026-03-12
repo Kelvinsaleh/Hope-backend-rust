@@ -110,7 +110,7 @@ async fn process_background_tasks(
         let collection = db.collection::<ResilienceRep>("resilience_reps");
         let uid = ObjectId::parse_str(&user_id).unwrap();
         let now = bson::DateTime::from_millis(Utc::now().timestamp_millis());
-        let expires = bson::DateTime::from_millis((Utc::now() + Duration::hours(48)).timestamp_millis());
+        let expires = bson::DateTime::from_millis((Utc::now() + Duration::try_hours(48).unwrap()).timestamp_millis());
 
         let rep = ResilienceRep {
             id: None,
@@ -249,12 +249,9 @@ pub async fn chat_stream(
     let user_id = user.user_id.clone();
     let message = payload.message.clone();
 
-    let mut full_response = String::new();
-
     let event_stream = stream.map(move |result| {
         match result {
             Ok(chunk) => {
-                full_response.push_str(&chunk);
                 Event::default().data(serde_json::json!({
                     "type": "chunk",
                     "content": chunk

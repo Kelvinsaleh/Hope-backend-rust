@@ -77,7 +77,7 @@ impl AnalysisService {
         themes
     }
 
-    pub fn compute_emotional_state(content: &str, mood: i32) -> String {
+    pub fn compute_emotional_state(_content: &str, mood: i32) -> String {
         if mood <= 2 { return "very low".to_string(); }
         if mood == 3 { return "low".to_string(); }
         if mood == 4 { return "neutral".to_string(); }

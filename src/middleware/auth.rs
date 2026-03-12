@@ -16,7 +16,6 @@ pub struct AuthenticatedUser {
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where
-    Arc<DbContext>: FromRequestParts<S>,
     S: Send + Sync,
 {
     type Rejection = (StatusCode, &'static str);
