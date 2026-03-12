@@ -18,7 +18,7 @@ lazy_static! {
 }
 
 impl WsHub {
-    pub async fn handle_socket(user_id: String, mut socket: WebSocket) {
+    pub async fn handle_socket(user_id: String, socket: WebSocket) {
         let (tx, mut rx) = mpsc::unbounded_channel();
         
         // Register user in Hub

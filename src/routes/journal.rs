@@ -3,7 +3,6 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use serde::Serialize;
 use std::sync::Arc;
 use crate::utils::database::DbContext;
 use crate::middleware::auth::AuthenticatedUser;

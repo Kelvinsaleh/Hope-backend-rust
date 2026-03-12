@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::utils::database::DbContext;
 use crate::middleware::auth::AuthenticatedUser;
 use crate::models::activity::UserActivity;
-use bson::{doc, oid::ObjectId, DateTime};
+use bson::{oid::ObjectId, DateTime};
 use chrono::Utc;
 
 pub async fn log_activity(

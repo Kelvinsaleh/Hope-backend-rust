@@ -4,7 +4,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
 use crate::utils::database::DbContext;
 use crate::middleware::auth::AuthenticatedUser;

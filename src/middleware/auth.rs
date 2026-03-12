@@ -1,13 +1,11 @@
 use axum::{
     async_trait,
-    extract::{FromRequestParts, State},
+    extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use crate::models::user::Claims;
-use crate::utils::database::DbContext;
 use crate::utils::cache::CacheManager;
-use std::sync::Arc;
 
 pub struct AuthenticatedUser {
     pub user_id: String,

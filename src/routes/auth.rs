@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use crate::utils::database::DbContext;
 use crate::services::auth::AuthService;
-use crate::models::user::User;
 use bson::{doc, Document};
 
 #[derive(Deserialize)]

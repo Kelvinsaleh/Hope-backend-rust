@@ -6,7 +6,6 @@ use axum::{
 use std::sync::Arc;
 use crate::utils::database::DbContext;
 use crate::middleware::auth::AuthenticatedUser;
-use crate::models::user::User;
 use crate::models::activity::ProfileUpdate;
 use bson::{doc, oid::ObjectId, Document};
 

@@ -1,8 +1,7 @@
 use reqwest::Client;
 use serde_json::json;
 use crate::config::Config;
-use std::time::SystemTime;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 pub struct EmailService {
     client: Client,

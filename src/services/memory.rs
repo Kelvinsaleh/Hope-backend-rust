@@ -1,7 +1,6 @@
 use mongodb::Database;
 use bson::{doc, oid::ObjectId, DateTime};
 use futures::StreamExt;
-use std::sync::Arc;
 use regex::Regex;
 use lazy_static::lazy_static;
 
