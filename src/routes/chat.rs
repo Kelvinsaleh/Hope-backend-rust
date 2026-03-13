@@ -337,7 +337,10 @@ pub async fn create_session(
     let collection = db_context.db.collection::<ChatSession>("chat_sessions");
     let uid = match ObjectId::parse_str(&user.user_id) {
         Ok(id) => id,
-        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to parse user_id '{}': {:?}", user.user_id, e);
+            return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response()
+        },
     };
     let now = bson::DateTime::from_millis(Utc::now().timestamp_millis());
 
@@ -351,19 +354,33 @@ pub async fn create_session(
         is_archived: false,
     };
 
+    tracing::debug!("Inserting new session for user_id: {}", uid);
+
     match collection.insert_one(new_session, None).await {
         Ok(result) => {
-            let session_id = result.inserted_id.as_object_id().unwrap().to_hex();
-            (StatusCode::CREATED, Json(serde_json::json!({ 
-                "success": true, 
-                "sessionId": session_id,
-                "message": "Session created" 
+            if let Some(oid) = result.inserted_id.as_object_id() {
+                let session_id = oid.to_hex();
+                tracing::info!("Successfully created session: {}", session_id);
+                (StatusCode::CREATED, Json(serde_json::json!({ 
+                    "success": true, 
+                    "sessionId": session_id,
+                    "message": "Session created" 
+                }))).into_response()
+            } else {
+                tracing::error!("Inserted session but failed to get ObjectID from result.id: {:?}", result.inserted_id);
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ 
+                    "success": false, 
+                    "message": "Failed to retrieve new session ID" 
+                }))).into_response()
+            }
+        },
+        Err(e) => {
+            tracing::error!("Database error inserting session for user {}: {:?}", uid, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ 
+                "success": false, 
+                "message": format!("Database error: {}", e) 
             }))).into_response()
         },
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ 
-            "success": false, 
-            "message": "Failed to create session" 
-        }))).into_response(),
     }
 }
 

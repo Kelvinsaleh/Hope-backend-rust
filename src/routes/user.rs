@@ -14,19 +14,37 @@ pub async fn get_profile(
     user: AuthenticatedUser,
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<Document>("users");
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("get_profile: Invalid user_id in token '{}': {:?}", user.user_id, e);
+            return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response();
+        }
+    };
 
-    let user_doc = collection.find_one(doc! { "_id": uid }, None).await.unwrap();
+    tracing::debug!("get_profile: Fetching profile for user {}", uid);
 
-    match user_doc {
-        Some(mut u) => {
+    match collection.find_one(doc! { "_id": uid }, None).await {
+        Ok(Some(mut u)) => {
             // Convert _id to hex string for Flutter
             if let Some(id) = u.get_object_id("_id").ok() {
                 u.insert("_id", id.to_hex());
             }
-            (StatusCode::OK, Json(serde_json::json!({ "success": true, "user": u })))
+            // Remove password for security
+            u.remove("password");
+            
+            tracing::info!("get_profile: Successfully retrieved profile for {}", uid);
+            (StatusCode::OK, Json(serde_json::json!({ "success": true, "user": u }))).into_response()
         },
-        None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "success": false, "message": "User not found" }))),
+        Ok(None) => {
+            tracing::warn!("get_profile: User {} not found in database", uid);
+            (StatusCode::NOT_FOUND, Json(serde_json::json!({ "success": false, "message": "User not found" }))).into_response()
+        },
+        Err(e) => {
+            tracing::error!("get_profile: Database error for user {}: {:?}", uid, e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "success": false, "message": "Database error" }))).into_response()
+        }
     }
 }
 
