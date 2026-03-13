@@ -332,6 +332,7 @@ pub async fn list_sessions(
 pub async fn create_session(
     State(db_context): State<Arc<DbContext>>,
     user: AuthenticatedUser,
+    Json(_payload): Json<serde_json::Value>, // Explicitly accept JSON body
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<ChatSession>("chat_sessions");
     let uid = match ObjectId::parse_str(&user.user_id) {
