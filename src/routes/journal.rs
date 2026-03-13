@@ -18,22 +18,25 @@ pub async fn create_entry(
     let collection = db_context.db.collection::<JournalEntry>("journal_entries");
     
     let now = DateTime::from_millis(Utc::now().timestamp_millis());
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+    };
 
     let entry = JournalEntry {
         id: None,
-        userId: uid,
+        user_id: uid,
         title: payload.title.unwrap_or_else(|| "Untitled Entry".to_string()),
         content: payload.content,
         mood: payload.mood,
         tags: payload.tags.unwrap_or_default(),
-        insights: Vec::new(), // To be populated by AI service
-        emotionalState: "neutral".to_string(),
-        keyThemes: Vec::new(),
+        insights: Vec::new(),
+        emotional_state: "neutral".to_string(),
+        key_themes: Vec::new(),
         concerns: Vec::new(),
         achievements: Vec::new(),
-        createdAt: now,
-        updatedAt: now,
+        created_at: now,
+        updated_at: now,
     };
 
     match collection.insert_one(entry, None).await {
@@ -45,6 +48,7 @@ pub async fn create_entry(
             })))
         }
         Err(e) => {
+            tracing::error!("Failed to create journal entry: {}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
                 "success": false,
                 "message": format!("Database Error: {}", e)
@@ -58,20 +62,31 @@ pub async fn list_entries(
     user: AuthenticatedUser,
 ) -> impl IntoResponse {
     let collection = db_context.db.collection::<JournalEntry>("journal_entries");
-    let uid = ObjectId::parse_str(&user.user_id).unwrap();
+    let uid = match ObjectId::parse_str(&user.user_id) {
+        Ok(id) => id,
+        Err(_) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "message": "Invalid user ID" }))).into_response(),
+    };
 
     let filter = doc! { "userId": uid };
-    let mut cursor = collection.find(filter, None).await.unwrap();
-    let mut entries = Vec::new();
-
-    while let Some(result) = futures::StreamExt::next(&mut cursor).await {
-        if let Ok(entry) = result {
-            entries.push(entry);
+    match collection.find(filter, None).await {
+        Ok(mut cursor) => {
+            let mut entries = Vec::new();
+            while let Some(result) = futures::StreamExt::next(&mut cursor).await {
+                if let Ok(entry) = result {
+                    entries.push(entry);
+                }
+            }
+            (StatusCode::OK, Json(serde_json::json!({
+                "success": true,
+                "entries": entries
+            }))).into_response()
+        },
+        Err(e) => {
+            tracing::error!("Failed to list journal entries: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
+                "success": false,
+                "message": "Database error"
+            }))).into_response()
         }
     }
-
-    (StatusCode::OK, Json(serde_json::json!({
-        "success": true,
-        "entries": entries
-    })))
 }
