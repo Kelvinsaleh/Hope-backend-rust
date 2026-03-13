@@ -343,9 +343,12 @@ pub async fn create_session(
         },
     };
     let now = bson::DateTime::from_millis(Utc::now().timestamp_millis());
+    let new_oid = ObjectId::new();
+    let session_id_str = new_oid.to_hex();
 
     let new_session = ChatSession {
-        id: None,
+        id: Some(new_oid),
+        session_id: session_id_str.clone(),
         user_id: uid,
         title: Some("New Session".to_string()),
         messages: vec![],
@@ -354,25 +357,16 @@ pub async fn create_session(
         is_archived: false,
     };
 
-    tracing::debug!("Inserting new session for user_id: {}", uid);
+    tracing::debug!("Inserting new session for user_id: {} with sessionId: {}", uid, session_id_str);
 
     match collection.insert_one(new_session, None).await {
-        Ok(result) => {
-            if let Some(oid) = result.inserted_id.as_object_id() {
-                let session_id = oid.to_hex();
-                tracing::info!("Successfully created session: {}", session_id);
-                (StatusCode::CREATED, Json(serde_json::json!({ 
-                    "success": true, 
-                    "sessionId": session_id,
-                    "message": "Session created" 
-                }))).into_response()
-            } else {
-                tracing::error!("Inserted session but failed to get ObjectID from result.id: {:?}", result.inserted_id);
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ 
-                    "success": false, 
-                    "message": "Failed to retrieve new session ID" 
-                }))).into_response()
-            }
+        Ok(_) => {
+            tracing::info!("Successfully created session: {}", session_id_str);
+            (StatusCode::CREATED, Json(serde_json::json!({ 
+                "success": true, 
+                "sessionId": session_id_str,
+                "message": "Session created" 
+            }))).into_response()
         },
         Err(e) => {
             tracing::error!("Database error inserting session for user {}: {:?}", uid, e);

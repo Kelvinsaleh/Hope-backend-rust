@@ -13,6 +13,8 @@ pub struct ChatMessage {
 pub struct ChatSession {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     #[serde(rename = "userId")]
     pub user_id: ObjectId,
     pub title: Option<String>,
